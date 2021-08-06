@@ -3,25 +3,31 @@ package main
 import (
 	"fmt"
 	"os/exec"
+	"strconv"
+
+	"strings"
 
 	"github.com/egregors/splsh/icon"
 	"github.com/getlantern/systray"
+	"github.com/reujab/wallpaper"
 	"github.com/skratchdot/open-golang/open"
 )
 
 // TODO: extract it to OS specific modules
 // getScreenResolution returns the screen resolution of the current monitor (works on MacOS)
-func getScreenResolution() string {
+func getScreenResolution() (int, int) {
 	cmd := "system_profiler SPDisplaysDataType | awk '/Resolution/{print $2, $3, $4}'"
-	out, err := exec.Command("bash", "-c", cmd).Output()
-	if err != nil {
-		return fmt.Sprintf("Failed to execute command: %s", cmd)
-	}
-	return string(out)
+	// FIXME: catch err
+	out, _ := exec.Command("bash", "-c", cmd).Output()
+	res := strings.Split(strings.Trim(string(out), "\n"), " ")
+	height, _ := strconv.Atoi(res[0])
+	width, _ := strconv.Atoi(res[2])
+	return height, width
 }
 
 func main() {
 	println("Hello, World!")
+	getScreenResolution()
 	systray.Run(onReady, onExit)
 }
 
@@ -30,7 +36,8 @@ func onReady() {
 	systray.SetIcon(icon.Data)
 	systray.SetTooltip("Splsh")
 	mImgSourceURL := systray.AddMenuItem("Unsplash", "All images from https://unsplash.com/")
-	mScreenResolution := systray.AddMenuItem(getScreenResolution(), "")
+	h, w := getScreenResolution()
+	mScreenResolution := systray.AddMenuItem(fmt.Sprintf("%d x %d", h, w), "")
 	mScreenResolution.Disable()
 	systray.AddSeparator()
 	mNext := systray.AddMenuItem("Next", "Set next image")
@@ -42,12 +49,20 @@ func onReady() {
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "")
 
+	// mbp 16" for example
+	// imgURL := fmt.Sprintf("https://picsum.photos/3072/1920", h, w)
+	imgURL := fmt.Sprintf("https://picsum.photos/%d/%d", h, w)
+
 	for {
 		select {
 		case <-mImgSourceURL.ClickedCh:
 			_ = open.Run("https://unsplash.com/")
 		case <-mNext.ClickedCh:
 			println("Next")
+			err := wallpaper.SetFromFile(imgURL)
+			if err != nil {
+				println(err)
+			}
 			// TODO:
 			// 		- [ ] get cache folder (get or create)
 			// 		- [ ] download image

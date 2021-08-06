@@ -20,6 +20,10 @@ race:  ## Run data race detector
 build:  ## Build the binary file
 	@go build -v $(PKG)
 
+sync:  ## Sync deps
+	@go mod tidy
+	@go mod vendor
+
 run:  ## Go run in debug mode with a race detector
 	@go run -race main.go --dbg
 
