@@ -49,9 +49,12 @@ func onReady() {
 	mNext := systray.AddMenuItem("Next", "Set next image")
 	systray.AddSeparator()
 	mGrayscaleMode := systray.AddMenuItemCheckbox("Grayscale", "", false)
+	mGrayscaleMode.Disable()
 	mBlurMode := systray.AddMenuItemCheckbox("Blur", "", false)
+	mBlurMode.Disable()
 	systray.AddSeparator()
 	mClearCache := systray.AddMenuItem("Clear Cache", "")
+	mClearCache.Disable()
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "")
 

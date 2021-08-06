@@ -20,6 +20,16 @@ race:  ## Run data race detector
 build:  ## Build the binary file
 	@go build -v $(PKG)
 
+release: clean build  ## Make MacOS bundle
+	@mkdir -p dist
+	@mkdir -p dist/Splsh.app
+	@mkdir dist/Splsh.app/Contents
+	@mkdir -p dist/Splsh.app/Contents/MacOS
+	@mkdir -p dist/Splsh.app/Contents/Resources
+	@cp ./Splsh dist/Splsh.app/Contents/MacOS
+	@cp ./Info.plist dist/Splsh.app/Contents/Info.plist
+	@cp ./icon/icon.icns dist/Splsh.app/Contents/Resources/Splsh.icns
+
 sync:  ## Sync deps
 	@go mod tidy
 	@go mod vendor
@@ -29,6 +39,7 @@ run:  ## Go run in debug mode with a race detector
 
 clean:  ## Remove previous build
 	@rm -f $(PROJECT_NAME)
+	@rm -rf dist
 
 docker: ## build Docker image
 	@docker build -t splsh .
