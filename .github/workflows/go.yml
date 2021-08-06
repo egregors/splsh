@@ -22,7 +22,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install build-essential libgtk-3-dev libappindicator3-dev gir1.2-appindicator3-0.1
-        go get github.com/golangci/golangci-lint/cmd/golangci-lint@v${GOLANGCI} && golangci-lint --version
+        go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.39.0 && golangci-lint --version
 
     - name: Build
       run: make build
