@@ -1,8 +1,14 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io"
+	"math/rand"
+	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 
 	"strings"
@@ -15,19 +21,19 @@ import (
 
 // TODO: extract it to OS specific modules
 // getScreenResolution returns the screen resolution of the current monitor (works on MacOS)
-func getScreenResolution() (int, int) {
+func getScreenResolution() (height, width int) {
 	cmd := "system_profiler SPDisplaysDataType | awk '/Resolution/{print $2, $3, $4}'"
 	// FIXME: catch err
 	out, _ := exec.Command("bash", "-c", cmd).Output()
 	res := strings.Split(strings.Trim(string(out), "\n"), " ")
-	height, _ := strconv.Atoi(res[0])
-	width, _ := strconv.Atoi(res[2])
+	height, _ = strconv.Atoi(res[0])
+	width, _ = strconv.Atoi(res[2])
 	return height, width
 }
 
+// TODO: add revision
 func main() {
-	println("Hello, World!")
-	getScreenResolution()
+	fmt.Println(">>> Splsh")
 	systray.Run(onReady, onExit)
 }
 
@@ -57,16 +63,23 @@ func onReady() {
 		select {
 		case <-mImgSourceURL.ClickedCh:
 			_ = open.Run("https://unsplash.com/")
+		// TODO: extract all this mess to a separate func
 		case <-mNext.ClickedCh:
 			println("Next")
 			err := wallpaper.SetFromFile(imgURL)
 			if err != nil {
 				println(err)
 			}
-			// TODO:
-			// 		- [ ] get cache folder (get or create)
-			// 		- [ ] download image
-			// 		- [ ] set image from file
+			imgURL := fmt.Sprintf("https://picsum.photos/%d/%d", h, w)
+			l, err := downloadImage(imgURL)
+			if err != nil {
+				fmt.Println(err)
+			}
+			// FIXME: for some reason on MacOS 11.4 background image changes through default one
+			err = wallpaper.SetFromFile(l)
+			if err != nil {
+				fmt.Println(err)
+			}
 		// ---------------------------
 		case <-mGrayscaleMode.ClickedCh:
 			println("Gray Mood")
@@ -100,4 +113,52 @@ func onReady() {
 
 func onExit() {
 	fmt.Println("Bye, World!")
+}
+
+func downloadImage(url string) (string, error) {
+	// nolint:gosec // it's ok for this goal
+	res, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return "", errors.New("non-200 status code")
+	}
+
+	cacheDir := getCacheDir()
+
+	file, err := os.Create(filepath.Join(cacheDir, fmt.Sprintf("%s.jpg", randStringRunes(16))))
+	if err != nil {
+		return "", err
+	}
+
+	_, err = io.Copy(file, res.Body)
+	if err != nil {
+		return "", err
+	}
+
+	err = file.Close()
+	if err != nil {
+		return "", err
+	}
+
+	return file.Name(), nil
+}
+
+// TODO: get cache dir from OS
+func getCacheDir() string {
+	_ = os.MkdirAll(filepath.Join("tmp", "splsh"), os.ModePerm)
+	return "/tmp/splsh"
+}
+
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func randStringRunes(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		// nolint:gosec // it's ok for this goal
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }
