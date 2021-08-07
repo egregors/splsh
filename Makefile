@@ -3,6 +3,11 @@ PKG := "github.com/egregors/$(PROJECT_NAME)"
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
 
+CC := gcc 
+CGO_ENABLED := 1 
+GOOS := darwin
+GOARCH := amd64
+
 
 .PHONY: all build clean test lint docker run
 
@@ -18,7 +23,8 @@ race:  ## Run data race detector
 	@go test -race -short ${PKG_LIST}
 
 build:  ## Build the binary file
-	@go build -v $(PKG)
+	# @go build -v $(PKG)
+	@go build -gccgoflags="-DDARWIN -x objective-c -fobjc-arc" -ldflags="framework=Cocoa" -v $(PKG)
 
 release: clean build  ## Make MacOS bundle
 	@mkdir -p dist

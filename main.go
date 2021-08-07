@@ -115,7 +115,8 @@ func onReady() {
 }
 
 func onExit() {
-	fmt.Println("Bye, World!")
+	// TODO: clean cache here maybe
+	fmt.Println("Bye!")
 }
 
 func downloadImage(url string) (string, error) {
