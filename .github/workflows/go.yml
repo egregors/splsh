@@ -20,20 +20,5 @@ jobs:
 
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v2.5.2
-
-    - name: Deps
-      run: |
-        sudo apt-get update
-        sudo apt-get install build-essential libgtk-3-dev libappindicator3-dev gir1.2-appindicator3-0.1
-
-    - name: Build
-      run: go build -gccgoflags="-DDARWIN -x objective-c -fobjc-arc" -ldflags="framework=Cocoa" .
-      env:
-          CC: gcc
-          CGO_ENABLED: 1
-          GOOS: darwin
-          GOARCH: amd64
-          GOFLAGS: "-mod=vendor"
-          GO111MODULE: "on"
-
-
+    
+# TODO: add release build step    
